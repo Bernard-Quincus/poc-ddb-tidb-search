@@ -131,6 +131,7 @@ export class LambdaStack extends Stack {
             queueName: queueName + ".fifo",
             fifo: true,
             contentBasedDeduplication: true,
+            visibilityTimeout: Duration.seconds(30),
             deadLetterQueue: {
                 queue: dlq,
                 maxReceiveCount: 5,
