@@ -41,7 +41,7 @@ export class APIStack extends Stack {
         });
 
         const search_path = api.root.addResource("search");
-        receiver_path.addMethod("GET", new apig.LambdaIntegration(props.searchFunc, {
+        search_path.addMethod("GET", new apig.LambdaIntegration(props.searchFunc, {
             requestParameters: {
                 "integration.request.header.ORGID": "method.request.header.ORGID"
             }

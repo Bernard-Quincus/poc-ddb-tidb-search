@@ -34,7 +34,7 @@ export class LambdaStack extends Stack {
     private receiveShipment(pocTable: Table,) :GoFunction {
         const func = new GoFunction(this, "POC_ReceiveShipmentFunc", {
             functionName: "poc-receive-shipment-func",
-            timeout: Duration.seconds(120),
+            timeout: Duration.seconds(60),
             entry: "./cmd/receiveShipment",
             tracing: Tracing.PASS_THROUGH,
             architecture: lambda.Architecture.ARM_64,
@@ -52,12 +52,14 @@ export class LambdaStack extends Stack {
     }
 
     private streamReceiver(pocTable: Table, queue: Queue) {
-        const streamErrDlq = new Queue(this, "POC_Table_DDB_Error_Stream_Handler.dlq");
+        const streamErrDlq = new Queue(this, "POC_Table_DDB_Error_Stream_Handler.dlq",
+        {visibilityTimeout: Duration.seconds(60)},);
+
         const onFailed = new SqsDlq(streamErrDlq);
 
         const func = new GoFunction(this, "POC_StreamReceiverFunc", {
             functionName: "poc-stream-receiver-func",
-            timeout: Duration.seconds(120),
+            timeout: Duration.seconds(60),
             entry: "./cmd/streamReceiver",
             tracing: Tracing.PASS_THROUGH,
             architecture: lambda.Architecture.ARM_64,
@@ -82,11 +84,11 @@ export class LambdaStack extends Stack {
     }
 
     private sendDDBRecord(queue: Queue) {
-        const dlq = new Queue(this, "POC_SendDDB_Error_Handler.dlq");
+        const dlq = new Queue(this, "POC_SendDDB_Error_Handler.dlq", {visibilityTimeout: Duration.seconds(60)});
 
         const func = new GoFunction(this, "POC_SendDDB_Record_Func", {
             functionName: "poc-send-ddb-record-func",
-            timeout: Duration.seconds(120),
+            timeout: Duration.seconds(60),
             entry: "./cmd/sendDDBRecord",
             tracing: Tracing.PASS_THROUGH,
             architecture: lambda.Architecture.ARM_64,
@@ -110,7 +112,7 @@ export class LambdaStack extends Stack {
     private search() :GoFunction {
         return new GoFunction(this, "POC_Search_Func", {
             functionName: "poc-search-func",
-            timeout: Duration.seconds(120),
+            timeout: Duration.seconds(60),
             entry: "./cmd/search",
             tracing: Tracing.PASS_THROUGH,
             architecture: lambda.Architecture.ARM_64,
@@ -121,17 +123,18 @@ export class LambdaStack extends Stack {
     }
 
     private createFIFOQueue(queueName: string): Queue {
-        const dlq = new Queue(this, queueName + "-DLQ-FIFO", {
+        const dlq = new Queue(this, queueName + "-DLQ.fifo", {
             queueName: queueName + "-DLQ.fifo",
             fifo: true,
             encryption: QueueEncryption.SQS_MANAGED,
+            visibilityTimeout: Duration.seconds(60),
         });
 
         const queue = new Queue(this, queueName, {
             queueName: queueName + ".fifo",
             fifo: true,
             contentBasedDeduplication: true,
-            visibilityTimeout: Duration.seconds(30),
+            visibilityTimeout: Duration.seconds(60),
             deadLetterQueue: {
                 queue: dlq,
                 maxReceiveCount: 5,
