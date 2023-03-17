@@ -46,7 +46,7 @@ export class LambdaStack extends Stack {
             },
         });
 
-        pocTable.grantReadData(func);
+        pocTable.grantReadWriteData(func);
 
         return func;
     }
@@ -63,6 +63,9 @@ export class LambdaStack extends Stack {
             entry: "./cmd/streamReceiver",
             tracing: Tracing.PASS_THROUGH,
             architecture: lambda.Architecture.ARM_64,
+            environment: {
+                QUEUE_URL: queue.queueUrl,
+            },
             bundling: {
                 goBuildFlags: ['-ldflags "-s -w"', "-trimpath"],
             },
@@ -116,6 +119,7 @@ export class LambdaStack extends Stack {
             entry: "./cmd/search",
             tracing: Tracing.PASS_THROUGH,
             architecture: lambda.Architecture.ARM_64,
+            memorySize: 1024,
             bundling: {
                 goBuildFlags: ['-ldflags "-s -w"', "-trimpath"],
             },
