@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -35,15 +36,15 @@ func (ddb *dynamoDB) SetTableName(name string) error {
 	return nil
 }
 
-func (ddb *dynamoDB) Put(input any) (any, error) {
-	if input == nil {
+func (ddb *dynamoDB) Put(input ...any) (any, error) {
+	if input == nil || len(input) == 0 {
 		return nil, nil
 	}
 	if ddb.tableName == "" {
 		return nil, errors.New("no table specified")
 	}
 
-	av, err := attributevalue.MarshalMapWithOptions(input, func(opt *attributevalue.EncoderOptions) {
+	av, err := attributevalue.MarshalMapWithOptions(input[0], func(opt *attributevalue.EncoderOptions) {
 		opt.TagKey = "json" // should have dynamodbav tags so we dont need to pass options
 	})
 	if err != nil {
@@ -84,7 +85,10 @@ func (ddb *dynamoDB) Search(input any) (any, error) {
 	return nil, nil
 }
 
-func (ddb *dynamoDB) Close(input any) error {
+func (ddb *dynamoDB) Close() error {
+	return nil
+}
 
+func (ddb *dynamoDB) GetTiDBConn() *sql.DB {
 	return nil
 }

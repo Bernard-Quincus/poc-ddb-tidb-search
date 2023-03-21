@@ -12,6 +12,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.20.5
 	github.com/aws/constructs-go/constructs/v10 v10.1.277
 	github.com/aws/jsii-runtime-go v1.77.0
+	github.com/go-sql-driver/mysql v1.7.0
+	github.com/google/uuid v1.3.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.2
 )
