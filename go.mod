@@ -12,10 +12,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.20.5
 	github.com/aws/constructs-go/constructs/v10 v10.1.277
 	github.com/aws/jsii-runtime-go v1.77.0
+	github.com/bxcodec/faker/v4 v4.0.0-beta.3
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/google/uuid v1.3.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.2
+	golang.org/x/time v0.3.0
 )
 
 require (
@@ -44,6 +46,7 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

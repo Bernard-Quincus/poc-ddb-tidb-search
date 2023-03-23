@@ -71,11 +71,6 @@ func parseAndSend(ctx context.Context, record *events.SQSMessage, tiDB db.DB) er
 func syncToTiTB(ctx context.Context, orgID, recordType string, job *models.Job, tiDB db.DB) error {
 	var err error
 
-	// temp
-	logger.WithFields(logger.Fields{
-		"job": job,
-	}).Info("message to TiDB")
-
 	switch recordType {
 
 	case recType_Insert:
@@ -126,9 +121,6 @@ func insertToTiDB(job *models.Job, tiDB db.DB) error {
 	}
 
 	sqlStmts = append(sqlStmts, jobStmt, jobRefStmt)
-
-	// temp
-	logger.Info("sqlStmts:", sqlStmts)
 
 	_, err = tiDB.Put(sqlStmts[0], sqlStmts[1])
 	if err != nil {
