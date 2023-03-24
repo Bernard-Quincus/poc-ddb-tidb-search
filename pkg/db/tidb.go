@@ -25,7 +25,14 @@ type tiDB struct {
 	tableName string
 }
 
-type tiDBResult struct {
+type TiDBRow struct {
+	UUID   string
+	Detail string
+}
+
+type TiDBResult struct {
+	TotalItems int
+	Details    []*TiDBRow
 }
 
 func NewTiDB(dbName string) (DB, error) {
@@ -93,9 +100,28 @@ func (tidb *tiDB) Delete(input any) error {
 	return nil
 }
 
-func (tidb *tiDB) Search(input any) (any, error) {
+func (tidb *tiDB) Search(input ...any) (any, error) {
+	result := make([]*TiDBRow, 0)
+	totalItems := 0
 
-	return nil, nil
+	for i, sql := range input {
+		if i == 0 {
+			res, err := tidb.execQuery(sql.(string))
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, res...)
+			continue
+		}
+
+		count, err := tidb.execTotalCountQuery(sql.(string))
+		if err != nil {
+			return nil, err
+		}
+		totalItems = count
+	}
+
+	return &TiDBResult{TotalItems: totalItems, Details: result}, nil
 }
 
 func (tidb *tiDB) Close() error {
@@ -104,4 +130,63 @@ func (tidb *tiDB) Close() error {
 
 func (tidb *tiDB) GetTiDBConn() *sql.DB {
 	return tidb.db
+}
+
+func (tidb *tiDB) execQuery(q string) ([]*TiDBRow, error) {
+
+	rows, err := tidb.db.QueryContext(context.Background(), q)
+	defer rows.Close()
+
+	var result = make([]*TiDBRow, 0)
+
+	// temp
+	fmt.Println("rows==>", rows)
+
+	for rows.Next() {
+		var r = new(TiDBRow)
+		if err := rows.Scan(&r.UUID, &r.Detail); err != nil {
+			return nil, err
+		}
+
+		// temp
+		fmt.Println("r==>", r.Detail, r.UUID)
+
+		result = append(result, r)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for rows.NextResultSet() {
+		for rows.Next() {
+			var r = new(TiDBRow)
+			if err := rows.Scan(&r.UUID, &r.Detail); err != nil {
+				return nil, err
+			}
+
+			// temp
+			fmt.Println("r2 ==>", r.Detail, r.UUID)
+			result = append(result, r)
+		}
+	}
+
+	return result, nil
+}
+
+func (tidb *tiDB) execTotalCountQuery(q string) (int, error) {
+
+	rows, err := tidb.db.QueryContext(context.Background(), q)
+	defer rows.Close()
+
+	var count = 0
+	for rows.Next() {
+		if err := rows.Scan(&count); err != nil {
+			return 0, err
+		}
+	}
+	if err = rows.Err(); err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

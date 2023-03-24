@@ -80,7 +80,7 @@ func (ddb *dynamoDB) Delete(input any) error {
 	return nil
 }
 
-func (ddb *dynamoDB) Search(input any) (any, error) {
+func (ddb *dynamoDB) Search(input ...any) (any, error) {
 
 	return nil, nil
 }

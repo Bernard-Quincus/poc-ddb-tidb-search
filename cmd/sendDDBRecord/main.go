@@ -65,10 +65,10 @@ func parseAndSend(ctx context.Context, record *events.SQSMessage, tiDB db.DB) er
 	// get sqs messag attributes -> recordType and orgID
 	orgID, recordType := getMessageAttribs(record)
 
-	return syncToTiTB(ctx, orgID, recordType, job, tiDB)
+	return syncToTiDB(ctx, orgID, recordType, job, tiDB)
 }
 
-func syncToTiTB(ctx context.Context, orgID, recordType string, job *models.Job, tiDB db.DB) error {
+func syncToTiDB(ctx context.Context, orgID, recordType string, job *models.Job, tiDB db.DB) error {
 	var err error
 
 	switch recordType {

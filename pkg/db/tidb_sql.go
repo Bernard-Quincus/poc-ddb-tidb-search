@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"poc-ddb-tidb-search/pkg/models"
+	"poc-ddb-tidb-search/pkg/query"
 	"strings"
 	"time"
 )
@@ -67,4 +68,80 @@ func MakeInsertJobReferenceSQLStatement(job *models.Job, uuid string) (string, e
 		facility, job.DeliveryPostcode, job.DeliveryCity, job.DeliveryAddress, "none yet", senderName, consigneeName)
 
 	return fmt.Sprintf(InsertJobRefSQL, keys, vals), nil
+}
+
+func MakeSearchSQLStatements(params *query.JobSearchParams, orgID string) []string {
+	stmts := make([]string, 0)
+	kv := make([]string, 0)
+	joinPrefixA := "a."
+	joinPrefixB := "b."
+	needToJoin := false
+
+	// check if we got jobs_reference table field to query
+	if params.ConsigneeName != "" || params.FacilityName != "" || params.OrderRefTags != "" || params.SenderName != "" ||
+		params.ShipmentTags != "" || params.VendorName != "" {
+		needToJoin = true
+	}
+
+	if !needToJoin {
+		joinPrefixA = ""
+		joinPrefixB = ""
+	}
+
+	// jobs table
+	if params.JobID != "" {
+		kv = append(kv, fmt.Sprintf("%sjob_id='%s'", joinPrefixA, params.JobID))
+	}
+	if params.OrderID != "" {
+		kv = append(kv, fmt.Sprintf("%sorder_id='%s'", joinPrefixA, params.OrderID))
+	}
+	if params.ShipmentID != "" {
+		kv = append(kv, fmt.Sprintf("%shipment_id='%s'", joinPrefixA, params.ShipmentID))
+	}
+	if params.Status != "" {
+		kv = append(kv, fmt.Sprintf("%sstatus='%s'", joinPrefixA, params.Status))
+	}
+	if params.StartTime != "" {
+		kv = append(kv, fmt.Sprintf("cast(%sstart_time as date)='%s'", joinPrefixA, params.StartTime)) // yyyy-mm-dd
+	}
+	if params.CommitTime != "" {
+		kv = append(kv, fmt.Sprintf("cast(%scommit_time as date)='%s'", joinPrefixA, params.CommitTime)) // yyyy-mm-dd
+	}
+
+	// job_refs table
+	if params.ShipmentTags != "" {
+		kv = append(kv, fmt.Sprintf("%sshipment_tags like '%s'", joinPrefixB, "%"+params.ShipmentTags+"%"))
+	}
+	if params.OrderRefTags != "" {
+		kv = append(kv, fmt.Sprintf("%sorder_refids like '%s'", joinPrefixB, "%"+params.OrderRefTags+"%"))
+	}
+	if params.VendorName != "" {
+		kv = append(kv, fmt.Sprintf("%sassigned_vendor='%s'", joinPrefixB, params.VendorName))
+	}
+	if params.FacilityName != "" {
+		kv = append(kv, fmt.Sprintf("%sassigned_facility='%s'", joinPrefixB, params.FacilityName))
+	}
+	if params.SenderName != "" {
+		kv = append(kv, fmt.Sprintf("%ssender_name='%s'", joinPrefixB, params.SenderName))
+	}
+	if params.ConsigneeName != "" {
+		kv = append(kv, fmt.Sprintf("%sconsignee_name='%s'", joinPrefixB, params.ConsigneeName))
+	}
+
+	qfields := strings.Join(kv, " and ")
+
+	q := fmt.Sprintf("Select uuid, detail from %s.jobs where org_id='%s' and %s limit %d, %d", TiDB_DatabaseName, orgID, qfields, params.PageNumber*params.PageSize, params.PageSize)
+	q2 := fmt.Sprintf("Select count(*) as totalrec from %s.jobs where org_id='%s' and %s", TiDB_DatabaseName, orgID, qfields)
+
+	if needToJoin {
+		q = fmt.Sprintf("Select a.uuid, a.detail from %s.jobs a left join %s.jobs_reference b on a.uuid = b.uuid where a.org_id='%s' and %s limit %d, %d",
+			TiDB_DatabaseName, TiDB_DatabaseName, orgID, qfields, params.PageNumber*params.PageSize, params.PageSize)
+
+		q2 = fmt.Sprintf("Select count(*) as totalrec from %s.jobs a left join %s.jobs_reference b on a.uuid = b.uuid where a.org_id='%s' and %s",
+			TiDB_DatabaseName, TiDB_DatabaseName, orgID, qfields)
+	}
+
+	stmts = append(stmts, q, q2)
+
+	return stmts
 }
