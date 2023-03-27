@@ -139,17 +139,11 @@ func (tidb *tiDB) execQuery(q string) ([]*TiDBRow, error) {
 
 	var result = make([]*TiDBRow, 0)
 
-	// temp
-	fmt.Println("rows==>", rows)
-
 	for rows.Next() {
 		var r = new(TiDBRow)
 		if err := rows.Scan(&r.UUID, &r.Detail); err != nil {
 			return nil, err
 		}
-
-		// temp
-		fmt.Println("r==>", r.Detail, r.UUID)
 
 		result = append(result, r)
 	}
@@ -164,8 +158,6 @@ func (tidb *tiDB) execQuery(q string) ([]*TiDBRow, error) {
 				return nil, err
 			}
 
-			// temp
-			fmt.Println("r2 ==>", r.Detail, r.UUID)
 			result = append(result, r)
 		}
 	}

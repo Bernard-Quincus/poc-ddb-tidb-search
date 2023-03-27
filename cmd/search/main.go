@@ -85,9 +85,6 @@ func searchInTiDB(tiDB db.DB, params *query.JobSearchParams, orgID string, start
 
 	sqlStms := db.MakeSearchSQLStatements(params, orgID)
 
-	// temp
-	logger.Info("sqlStms:", sqlStms)
-
 	res, err := tiDB.Search(sqlStms[0], sqlStms[1])
 	if err != nil {
 		return nil, err
